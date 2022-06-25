@@ -39,5 +39,3 @@ def ML_codesmell(X_tr, Y_tr, X_ts, Y_ts):
   accuracy = accuracy_score(Y_ts, y_pred_test)
   classification = classification_report(Y_ts, y_pred_test)
   return model_score, accuracy, classification
-
-model_score, accuracy_score, classification_report = ML_codesmell(X_crosstrain, Y_crosstrain, X_crosstest, Y_crosstest)
