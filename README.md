@@ -1,1 +1,1 @@
-Research Internship Project at Auckland University of Technology, New Zealand
+Research Internship at Auckland University of Technology, New Zealand
