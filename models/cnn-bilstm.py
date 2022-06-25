@@ -28,5 +28,5 @@ dense3 = Dense(20, activation='relu')(X)
 dense_final = Dense(1, activation='sigmoid')(dense3)
 
 merged_model = Model([input_struct, input_sem], dense_final)
-
 merged_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+history = merged_model.fit([X_struct_tr, X_seman_train], y=Y_train, validation_data=([X_struct_ts, X_seman_test], Y_test), batch_size=20, epochs=20)
