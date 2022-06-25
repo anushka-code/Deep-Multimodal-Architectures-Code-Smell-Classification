@@ -1,0 +1,76 @@
+params = {'MAX_LENGTH': 30,
+          'EPOCHS': 50,
+          'LEARNING_RATE': 5e-5,
+          'FT_EPOCHS': 5,
+          'OPTIMIZER': 'adam',
+          'FT_LEARNING_RATE': 2e-5,
+          'BATCH_SIZE': 64,
+          'NUM_STEPS': len(X_train.index) // 64,
+          'DISTILBERT_DROPOUT': 0.2,
+          'DISTILBERT_ATT_DROPOUT': 0.2,
+          'LAYER_DROPOUT': 0.2,
+          'KERNEL_INITIALIZER': 'GlorotNormal',
+          'BIAS_INITIALIZER': 'zeros',
+          'POS_PROBA_THRESHOLD': 0.5,          
+          'ADDED_LAYERS': 'Dense 256, Dense 32, Dropout 0.2',
+          'LR_SCHEDULE': '5e-5 for 6 epochs, Fine-tune w/ adam for 6 epochs @2e-5',
+          'FREEZING': 'All DistilBERT layers frozen for 6 epochs, then unfrozen for 6',
+          'CALLBACKS': '[early_stopping monitoring val_loss w/ patience=0]',
+          'RANDOM_STATE':42
+          }
+         
+ def batch_encode(tokenizer, texts, batch_size=191, max_length=params['MAX_LENGTH']):
+    input_ids = []
+    attention_mask = []
+    
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i+batch_size]
+        inputs = tokenizer.batch_encode_plus(batch,
+                                             max_length=max_length,
+                                             padding='longest',
+                                             truncation=True,
+                                             return_attention_mask=True,
+                                             return_token_type_ids=False
+                                             )
+        input_ids.extend(inputs['input_ids'])
+        attention_mask.extend(inputs['attention_mask'])
+    
+    
+    return tf.convert_to_tensor(input_ids), tf.convert_to_tensor(attention_mask)
+    
+tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
+X_train_ids, X_train_attention = batch_encode(tokenizer, word_groups)
+distilBERT = TFDistilBertModel.from_pretrained('distilbert-base-uncased', output_hidden_states = True)
+for layer in distilBERT.layers:
+    layer.trainable = False
+output = distilBERT([X_train_ids, X_train_attention])
+hidden_states = output[1]
+tfsentence = []
+sentence_embeddings = []
+sentence_emb_arr = []
+for i in range(1146):
+  tfsentence.append(hidden_states[-2][i])
+for i in range(1146):
+  samplei = tf.math.reduce_mean(tfsentence[i], axis=0)
+  sentence_embeddings.append(samplei)
+for i in range(1146):
+  storei = sentence_embeddings[i]
+  storearr = storei.numpy()
+  sentence_emb_arr.append(storearr)
+numarr = np.array(sentence_emb_arr)
+concat = np.concatenate((numarr, X_new), axis=1)
+
+model = Sequential()
+model.add(Convolution1D(filters=32, kernel_size=3, activation='relu', input_shape=(824,1)))
+model.add(Convolution1D(filters=64, kernel_size=3, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Convolution1D(filters=64, kernel_size=3, activation='relu'))
+model.add(Convolution1D(filters=128, kernel_size=3, activation='relu'))
+model.add(MaxPooling1D(pool_size=2))
+model.add(Flatten())
+model.add(Dense(100, activation='relu'))
+# model.add(Dense(50, activation='relu'))
+# model.add(Dense(25, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(optimizer='adam',loss='binary_crossentropy', metrics=['accuracy', 'precision', 'recall', 'f1score'])
+   
